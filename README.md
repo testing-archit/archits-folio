@@ -1,26 +1,40 @@
-# Next.js starter kit with Appwrite
+# ARCHIT.INTEL | Developer Intelligence Platform
 
-Kickstart your Next.js development with this ready-to-use starter project integrated with [Appwrite](https://www.appwrite.io)
+A production-grade, AI-powered, real-time developer portfolio for **Archit Gupta**. This platform is a live dashboard of engineering activity, skills evolution, and strategic growth.
 
-## 🚀Getting started
+## 🧠 System Architecture
 
-###
-Clone the Project
-Clone this repository to your local machine using Git:
+- **Next.js (App Router)**: Modern React framework for the frontend.
+- **Appwrite Backend**: Real-time database, serverless functions, and secure authentication.
+- **AI Layer (Gemini Pro)**: Automated weekly summaries, skill trend analysis, and a contextual chatbot.
+- **Framer Motion**: Premium glassmorphism UI with smooth animations.
 
-`git clone https://github.com/appwrite/starter-for-nextjs`
+## 🚀 Key Features
 
-## 🛠️ Development guid
-1. **Configure Appwrite**<br/>
-   Navigate to `.env` and update the values to match your Appwrite project credentials.
-2. **Customize as needed**<br/>
-   Modify the starter kit to suit your app's requirements. Adjust UI, features, or backend
-   integrations as per your needs.
-3. **Install dependencies**<br/>
-   Run `npm install` to install all dependencies.
-4. **Run the app**<br/>
-   Start the project by running `npm run dev`.
+1. **Live Activity Pulse**: Real-time monitoring of GitHub commits via Appwrite Realtime.
+2. **Curated Intelligence**: AI-enhanced project showcase synced with GitHub repositories.
+3. **Strategic Journey**: Professional timeline featuring key milestones and national achievements.
+4. **AI Conversational Agent**: Interactive chatbot trained on Archit's specific technical profile.
 
-## 💡 Additional notes
-- This starter project is designed to streamline your Next.js development with Appwrite.
-- Refer to the [Appwrite documentation](https://appwrite.io/docs) for detailed integration guidance.
+## 🛠️ Setup & Deployment
+
+### 1. Appwrite Configuration
+- Create a database `portfolio_db`.
+- Create collections: `projects`, `activity_logs`, `insights`, and `profile` (Reference: `src/lib/schema.js`).
+- Deploy serverless functions from the `/functions` directory.
+
+### 2. Environment Variables
+Update your Appwrite Function settings with:
+- `GITHUB_TOKEN`: Your GitHub Personal Access Token.
+- `GEMINI_API_KEY`: Your Google Generative AI API key.
+- `APPWRITE_API_KEY`: An API key with database and function execution permissions.
+
+### 3. Local Development
+```bash
+npm install
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view your intelligence feed.
+
+## 📄 Source Attribution
+Inspired by Vercel and Linear design systems. Powered by Appwrite and Gemini.# archits-folio
