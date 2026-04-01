@@ -1,311 +1,217 @@
 "use client";
 
-import "./app.css";
-import "@appwrite.io/pink-icons";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { client } from "@/lib/appwrite";
-import { AppwriteException } from "appwrite";
-import NextjsLogo from "../static/nextjs-icon.svg";
-import AppwriteLogo from "../static/appwrite-icon.svg";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import { databases, DATABASE_ID, COLLECTIONS } from "@/lib/appwrite";
+import { motion, AnimatePresence } from "framer-motion";
+import { Shield, Brain, Laptop, Terminal, ChevronRight, Wand2, Loader2, Sparkles } from "lucide-react";
+import LiveActivity from "@/components/LiveActivity";
+import ProjectGrid from "@/components/ProjectGrid";
+import ResumeTimeline from "@/components/ResumeTimeline";
+import AIChatbot from "@/components/AIChatbot";
+import GithubAnalyzer from "@/components/GithubAnalyzer";
+import NowSection from "@/components/NowSection";
 
 export default function Home() {
-  const [detailHeight, setDetailHeight] = useState(55);
-  const [logs, setLogs] = useState([]);
-  const [status, setStatus] = useState("idle");
-  const [showLogs, setShowLogs] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [stylizedPortrait, setStylizedPortrait] = useState(null);
+  const [isStylizing, setIsStylizing] = useState(false);
 
-  const detailsRef = useRef(null);
-
-  const updateHeight = useCallback(() => {
-    if (detailsRef.current) {
-      setDetailHeight(detailsRef.current.clientHeight);
+  useEffect(() => {
+    setMounted(true);
+    async function fetchProfile() {
+      try {
+        const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILE);
+        if (response.documents.length > 0) {
+          setProfile(response.documents[0]);
+        }
+      } catch (err) {
+        console.error("Hero profile fetch failed:", err);
+      }
     }
-  }, [logs, showLogs]);
-
-  useEffect(() => {
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, [updateHeight]);
-
-  useEffect(() => {
-    if (!detailsRef.current) return;
-    detailsRef.current.addEventListener("toggle", updateHeight);
-
-    return () => {
-      if (!detailsRef.current) return;
-      detailsRef.current.removeEventListener("toggle", updateHeight);
-    };
+    fetchProfile();
   }, []);
 
-  async function sendPing() {
-    if (status === "loading") return;
-    setStatus("loading");
+  const handleStylize = async () => {
+    setIsStylizing(true);
     try {
-      const result = await client.ping();
-      const log = {
-        date: new Date(),
-        method: "GET",
-        path: "/v1/ping",
-        status: 200,
-        response: JSON.stringify(result),
-      };
-      setLogs((prevLogs) => [log, ...prevLogs]);
-      setStatus("success");
+      const res = await fetch("/api/visuals", {
+        method: "POST",
+        body: JSON.stringify({ type: "hero_portrait" }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const result = await res.json();
+      if (result.success) {
+        setStylizedPortrait(`data:image/png;base64,${result.base64}`);
+      }
     } catch (err) {
-      const log = {
-        date: new Date(),
-        method: "GET",
-        path: "/v1/ping",
-        status: err instanceof AppwriteException ? err.code : 500,
-        response:
-          err instanceof AppwriteException
-            ? err.message
-            : "Something went wrong",
-      };
-      setLogs((prevLogs) => [log, ...prevLogs]);
-      setStatus("error");
+      console.error("Stylization failed:", err);
+    } finally {
+      setIsStylizing(false);
     }
-    setShowLogs(true);
-  }
+  };
+
+  if (!mounted) return null;
 
   return (
-    <main
-      className="checker-background flex flex-col items-center p-5"
-      style={{ marginBottom: `${detailHeight}px` }}
-    >
-      <div className="mt-25 flex w-full max-w-[40em] items-center justify-center lg:mt-34">
-        <div className="rounded-[25%] border border-[#19191C0A] bg-[#F9F9FA] p-3 shadow-[0px_9.36px_9.36px_0px_hsla(0,0%,0%,0.04)]">
-          <div className="rounded-[25%] border border-[#FAFAFB] bg-white p-5 shadow-[0px_2px_12px_0px_hsla(0,0%,0%,0.03)] lg:p-9">
-            <Image
-              alt={"Next.js logo"}
-              src={NextjsLogo}
-              width={56}
-              height={56}
-            />
-          </div>
-        </div>
-        <div
-          className={`flex w-38 items-center transition-opacity duration-2500 ${status === "success" ? "opacity-100" : "opacity-0"}`}
-        >
-          <div className="to-[rgba(253, 54, 110, 0.15)] h-[1px] flex-1 bg-gradient-to-l from-[#f02e65]"></div>
-          <div className="icon-check flex h-5 w-5 items-center justify-center rounded-full border border-[#FD366E52] bg-[#FD366E14] text-[#FD366E]"></div>
-          <div className="to-[rgba(253, 54, 110, 0.15)] h-[1px] flex-1 bg-gradient-to-r from-[#f02e65]"></div>
-        </div>
-        <div className="rounded-[25%] border border-[#19191C0A] bg-[#F9F9FA] p-3 shadow-[0px_9.36px_9.36px_0px_hsla(0,0%,0%,0.04)]">
-          <div className="rounded-[25%] border border-[#FAFAFB] bg-white p-5 shadow-[0px_2px_12px_0px_hsla(0,0%,0%,0.03)] lg:p-9">
-            <Image
-              alt={"Appwrite logo"}
-              src={AppwriteLogo}
-              width={56}
-              height={56}
-            />
-          </div>
-        </div>
-      </div>
+    <main className="min-h-screen bg-[#0a0a0a] selection:bg-pink-500/30 overflow-x-hidden relative checker-background-dark">
+      {/* Absolute Ambient Orbs */}
+      <div className="absolute top-[-10%] left-[-20%] w-[60%] h-[60%] rounded-full bg-pink-600/10 blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[10%] w-[40%] h-[40%] rounded-full bg-emerald-600/5 blur-[120px] pointer-events-none"></div>
 
-      <section className="mt-12 flex h-52 flex-col items-center">
-        {status === "loading" ? (
-          <div className="flex flex-row gap-4">
-            <div role="status">
-              <svg
-                aria-hidden="true"
-                className="h-5 w-5 animate-spin fill-[#FD366E] text-gray-200 dark:text-gray-600"
-                viewBox="0 0 100 101"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                  fill="currentFill"
-                />
-              </svg>
-              <span className="sr-only">Loading...</span>
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 px-8 py-6 backdrop-blur-md border-b border-white/[0.03]">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center font-bold text-white shadow-lg">
+              A
             </div>
-            <span>Waiting for connection...</span>
+            <span className="font-bold tracking-tight text-white/90 uppercase tracking-widest">{profile ? profile.name.split(' ')[0] + '.INTEL' : 'ARCHIT.INTEL'}</span>
           </div>
-        ) : status === "success" ? (
-          <h1 className="font-[Poppins] text-2xl font-light text-[#2D2D31]">
-            Congratulations!
-          </h1>
-        ) : (
-          <h1 className="font-[Poppins] text-2xl font-light text-[#2D2D31]">
-            Check connection
-          </h1>
-        )}
+          <div className="hidden md:flex gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">
+            <a href="#activity" className="hover:text-pink-500 transition-colors">Pulse</a>
+            <a href="#analyzer" className="hover:text-pink-500 transition-colors">Analyze</a>
+            <a href="#projects" className="hover:text-pink-500 transition-colors">Forge</a>
+            <a href="#journey" className="hover:text-pink-500 transition-colors">Journey</a>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold uppercase text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Sync
+            </div>
+          </div>
+        </div>
+      </nav>
 
-        <p className="mt-2 mb-8">
-          {status === "success" ? (
-            <span>You connected your app successfully.</span>
-          ) : status === "error" || status === "idle" ? (
-            <span>Send a ping to verify the connection</span>
-          ) : null}
-        </p>
-
-        <button
-          onClick={sendPing}
-          className={`cursor-pointer rounded-md bg-[#FD366E] px-2.5 py-1.5 ${status === "loading" ? "hidden" : "visible"}`}
+      {/* Hero Section */}
+      <section className="relative pt-44 pb-20 px-8 flex flex-col items-center text-center max-w-5xl mx-auto">
+        <div className="absolute top-44 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-pink-500/5 blur-[120px] -z-10 animate-pulse"></div>
+        
+        <motion.div
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-pink-400 mb-10 shadow-2xl backdrop-blur-md"
         >
-          <span className="text-white">Send a ping</span>
-        </button>
+          <Shield className="w-3 h-3" />
+          Autonomous Portfolio OS v2.0
+        </motion.div>
+
+        <div className="flex flex-col md:flex-row items-center gap-12 mb-16 text-left">
+           <div className="relative group">
+              <div className="w-48 h-48 md:w-64 md:h-64 rounded-[3rem] bg-gradient-to-br from-pink-500/20 to-violet-600/20 border border-white/10 overflow-hidden relative shadow-2xl">
+                 <AnimatePresence mode="wait">
+                   {stylizedPortrait ? (
+                     <motion.img 
+                        key="portrait"
+                        src={stylizedPortrait} 
+                        initial={{ opacity: 0, scale: 1.1 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full h-full object-cover" 
+                     />
+                   ) : (
+                     <motion.div 
+                        key="placeholder"
+                        className="w-full h-full flex flex-col items-center justify-center bg-white/[0.02] border-2 border-dashed border-white/5 rounded-[3rem]"
+                     >
+                        <Brain className="w-12 h-12 text-white/10" />
+                        <span className="text-[10px] font-mono text-white/20 mt-4">AI Identity Offline</span>
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+                 {isStylizing && (
+                   <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                      <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+                      <span className="text-[10px] font-bold text-white uppercase tracking-widest">Applying Neural Style...</span>
+                   </div>
+                 )}
+              </div>
+              <button 
+                onClick={handleStylize}
+                disabled={isStylizing}
+                className="absolute -bottom-4 -right-4 p-4 rounded-[1.5rem] bg-white text-black hover:scale-110 active:scale-95 transition-all shadow-2xl group flex items-center gap-2"
+              >
+                <Wand2 className="w-5 h-5" />
+                <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 text-xs font-bold whitespace-nowrap">Stylize Identity</span>
+              </button>
+           </div>
+
+           <div className="flex-1">
+              <motion.h1 
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-6xl md:text-[7rem] font-black tracking-tighter mb-6 leading-none bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent"
+              >
+                {profile ? profile.name.split(' ')[0] : 'ARCHIT'} <br /> {profile ? profile.name.split(' ')[1] : 'GUPTA'}
+              </motion.h1>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-wrap gap-4"
+              >
+                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/5 text-xs font-medium text-white/60">
+                   <Sparkles className="w-3 h-3 text-pink-400" />
+                   {profile ? profile.role.split('+')[0] : 'AI Architect'}
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/5 text-xs font-medium text-white/60 text-glow">
+                   <Terminal className="w-3 h-3 text-emerald-400" />
+                   {profile ? profile.role.split('+')[1] || 'Specialist' : 'Blockchain Specialist'}
+                </div>
+              </motion.div>
+           </div>
+        </div>
+
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-lg md:text-xl text-white/40 max-w-2xl font-light leading-relaxed mb-12 text-left"
+        >
+          {profile ? profile.tagline : 'Engineering high-performance decentralized systems and intelligence-driven platforms.'}
+        </motion.p>
       </section>
 
-      <div className="grid grid-rows-3 gap-7 lg:grid-cols-3 lg:grid-rows-none">
-        <div className="flex h-full w-72 flex-col gap-2 rounded-md border border-[#EDEDF0] bg-white p-4">
-          <h2 className="text-xl font-light text-[#2D2D31]">Edit your app</h2>
-          <p>
-            Edit{" "}
-            <code className="rounded-sm bg-[#EDEDF0] p-1">app/page.js</code> to
-            get started with building your app.
+      {/* Dashboard Section */}
+      <section id="activity" className="relative flex flex-col items-center">
+        <LiveActivity />
+      </section>
+
+      {/* Now Section */}
+      <section className="relative flex flex-col items-center">
+        <NowSection />
+      </section>
+
+      {/* Analyzer Section */}
+      <section id="analyzer" className="relative flex flex-col items-center">
+        <GithubAnalyzer />
+      </section>
+
+      {/* Projects Section */}
+      <section id="projects" className="relative flex flex-col items-center">
+        <ProjectGrid />
+      </section>
+
+      {/* Timeline Section */}
+      <section id="journey" className="relative flex flex-col items-center">
+        <ResumeTimeline />
+      </section>
+
+      {/* Chatbot */}
+      <AIChatbot />
+
+      <footer className="py-20 text-center border-t border-white/[0.03] bg-gradient-to-b from-transparent to-pink-500/5">
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-white/5 border border-white/10 flex items-center justify-center font-bold text-[10px]">A</div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/20 text-glow">Archit Gupta Portfolio Engine</span>
+          </div>
+          <p className="text-[10px] uppercase font-mono tracking-widest text-white/10">
+            Automated by Appwrite &bull; Powered by Gemini 1.5 Pro & Imagen 3 &bull; 2026 Edition
           </p>
         </div>
-        <a
-          href="https://cloud.appwrite.io"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <div className="flex h-full w-72 flex-col gap-2 rounded-md border border-[#EDEDF0] bg-white p-4">
-            <div className="flex flex-row items-center justify-between">
-              <h2 className="text-xl font-light text-[#2D2D31]">
-                Go to console
-              </h2>
-              <span className="icon-arrow-right text-[#D8D8DB]"></span>
-            </div>
-            <p>
-              Navigate to the console to control and oversee the Appwrite
-              services.
-            </p>
-          </div>
-        </a>
-
-        <a
-          href="https://appwrite.io/docs"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <div className="flex h-full w-72 flex-col gap-2 rounded-md border border-[#EDEDF0] bg-white p-4">
-            <div className="flex flex-row items-center justify-between">
-              <h2 className="text-xl font-light text-[#2D2D31]">
-                Explore docs
-              </h2>
-              <span className="icon-arrow-right text-[#D8D8DB]"></span>
-            </div>
-            <p>
-              Discover the full power of Appwrite by diving into our
-              documentation.
-            </p>
-          </div>
-        </a>
-      </div>
-
-      <aside className="fixed bottom-0 flex w-full cursor-pointer border-t border-[#EDEDF0] bg-white">
-        <details open={showLogs} ref={detailsRef} className={"w-full"}>
-          <summary className="flex w-full flex-row justify-between p-4 marker:content-none">
-            <div className="flex gap-2">
-              <span className="font-semibold">Logs</span>
-              {logs.length > 0 && (
-                <div className="flex items-center rounded-md bg-[#E6E6E6] px-2">
-                  <span className="font-semibold">{logs.length}</span>
-                </div>
-              )}
-            </div>
-            <div className="icon">
-              <span className="icon-cheveron-down" aria-hidden="true"></span>
-            </div>
-          </summary>
-          <div className="flex w-full flex-col lg:flex-row">
-            <div className="flex flex-col border-r border-[#EDEDF0]">
-              <div className="border-y border-[#EDEDF0] bg-[#FAFAFB] px-4 py-2 text-[#97979B]">
-                Project
-              </div>
-              <div className="grid grid-cols-2 gap-4 p-4">
-                <div className="flex flex-col">
-                  <span className="text-[#97979B]">Endpoint</span>
-                  <span className="truncate">
-                    {process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[#97979B]">Project-ID</span>
-                  <span className="truncate">
-                    {process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[#97979B]">Project name</span>
-                  <span className="truncate">
-                    {process.env.NEXT_PUBLIC_APPWRITE_PROJECT_NAME}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex-grow">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-y border-[#EDEDF0] bg-[#FAFAFB] text-[#97979B]">
-                    {logs.length > 0 ? (
-                      <>
-                        <td className="w-52 py-2 pl-4">Date</td>
-                        <td>Status</td>
-                        <td>Method</td>
-                        <td className="hidden lg:table-cell">Path</td>
-                        <td className="hidden lg:table-cell">Response</td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="py-2 pl-4">Logs</td>
-                      </>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.length > 0 ? (
-                    logs.map((log, index) => (
-                      <tr key={`log-${index}-${log.date.getTime()}`}>
-                        <td className="py-2 pl-4 font-[Fira_Code]">
-                          {log.date.toLocaleString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </td>
-                        <td>
-                          {log.status > 400 ? (
-                            <div className="w-fit rounded-sm bg-[#FF453A3D] px-1 text-[#B31212]">
-                              {log.status}
-                            </div>
-                          ) : (
-                            <div className="w-fit rounded-sm bg-[#10B9813D] px-1 text-[#0A714F]">
-                              {log.status}
-                            </div>
-                          )}
-                        </td>
-                        <td>{log.method}</td>
-                        <td className="hidden lg:table-cell">{log.path}</td>
-                        <td className="hidden font-[Fira_Code] lg:table-cell">
-                          {log.response}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr key="no-logs">
-                      <td className="py-2 pl-4 font-[Fira_Code]">
-                        There are no logs to show
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </details>
-      </aside>
+      </footer>
     </main>
   );
 }

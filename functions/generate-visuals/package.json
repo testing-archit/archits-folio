@@ -1,0 +1,11 @@
+{
+  "name": "generate-visuals",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "dependencies": {
+    "node-appwrite": "^14.1.0",
+    "google-auth-library": "^9.6.3",
+    "axios": "^1.6.7"
+  },
+  "type": "module"
+}

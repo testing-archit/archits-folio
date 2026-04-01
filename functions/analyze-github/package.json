@@ -1,0 +1,11 @@
+{
+  "name": "analyze-github",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "dependencies": {
+    "node-appwrite": "^14.1.0",
+    "@google/generative-ai": "^0.3.1",
+    "axios": "^1.6.7"
+  },
+  "type": "module"
+}
